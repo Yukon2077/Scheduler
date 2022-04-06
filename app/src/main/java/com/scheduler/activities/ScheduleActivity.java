@@ -1,8 +1,10 @@
-package com.scheduler;
+package com.scheduler.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+
+import com.scheduler.R;
 
 public class ScheduleActivity extends AppCompatActivity {
 

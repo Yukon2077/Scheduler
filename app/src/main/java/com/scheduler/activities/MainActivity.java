@@ -1,14 +1,17 @@
-package com.scheduler;
+package com.scheduler.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.scheduler.R;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    Button floatingActionButton;
+    FloatingActionButton floatingActionButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +27,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.floatingActionButton:
+                startActivity(new Intent(this, ScheduleActivity.class));
             break;
         }
 
