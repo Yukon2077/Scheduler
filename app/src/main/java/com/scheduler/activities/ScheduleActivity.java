@@ -20,7 +20,7 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_schedule);
 
-        dateButton = findViewById(R.id.date_button);
+        dateButton = findViewById(R.id.start_date_button);
         Date date = new Date();
         dateButton.setText(date.toString());
         dateButton.setOnClickListener(this);

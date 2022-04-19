@@ -41,8 +41,62 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Name" />
+                    android:hint="Title" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/is_all_day_checkbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:text="All-Day Event?"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
+
+            <Button
+                android:id="@+id/start_date_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="start date"
+                android:layout_margin="8dp"
+                style="@style/Widget.Material3.Button.TextButton"
+                app:layout_constraintEnd_toStartOf="@id/start_time_button"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/is_all_day_checkbox" />
+
+            <Button
+                android:id="@+id/start_time_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="start time"
+                android:layout_margin="8dp"
+                style="@style/Widget.Material3.Button.TextButton"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/start_date_button"
+                app:layout_constraintTop_toBottomOf="@+id/is_all_day_checkbox" />
+
+            <Button
+                android:id="@+id/end_date_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="end date"
+                android:layout_margin="8dp"
+                style="@style/Widget.Material3.Button.TextButton"
+                app:layout_constraintEnd_toStartOf="@id/end_time_button"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/start_date_button" />
+
+            <Button
+                android:id="@+id/end_time_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="end time"
+                android:layout_margin="8dp"
+                style="@style/Widget.Material3.Button.TextButton"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/end_date_button"
+                app:layout_constraintTop_toBottomOf="@+id/start_date_button" />
 
             <Button
                 android:id="@+id/save_button"
@@ -54,16 +108,20 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
-            <Button
-                android:id="@+id/date_button"
-                android:layout_width="0dp"
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Current date"
                 android:layout_margin="8dp"
-                style="@style/Widget.Material3.Button.OutlinedButton"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
+                app:layout_constraintTop_toBottomOf="@+id/end_date_button">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Description (optional)" />
+            </com.google.android.material.textfield.TextInputLayout>
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.core.widget.NestedScrollView>
