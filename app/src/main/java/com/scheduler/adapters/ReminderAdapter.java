@@ -17,7 +17,7 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.Remind
 
     List<Reminder> reminderList;
 
-    ReminderAdapter(List<Reminder> reminderList) {
+    public ReminderAdapter(List<Reminder> reminderList) {
         this.reminderList = reminderList;
     }
 
