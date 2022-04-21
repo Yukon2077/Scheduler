@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault());
         SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
 
-        reminderDAO.getReminderByDate(dateFormat.format(new Date()));
+        reminderList = reminderDAO.getReminderByDate(dateFormat.format(new Date()));
 
         reminderAdapter = new ReminderAdapter(reminderList);
         recyclerView.setAdapter(reminderAdapter);
@@ -57,7 +57,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(@NonNull CalendarView calendarView, int year, int month, int dayOfMonth) {
-
+                reminderList = reminderDAO.getReminderByDate(year + "/" + month + "/" + dayOfMonth);
+                reminderAdapter = new ReminderAdapter(reminderList);
+                recyclerView.setAdapter(reminderAdapter);
             }
         });
 
