@@ -23,8 +23,8 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         createNotificationChannel(context);
-        Integer ID = intent.getIntExtra("ID",-1);
-        ReminderRoomDB roomDB = Room.databaseBuilder(context,ReminderRoomDB.class,"ReminderDB").build();
+        long ID = intent.getLongExtra("ID",-1);
+        ReminderRoomDB roomDB = Room.databaseBuilder(context,ReminderRoomDB.class,"ReminderDB").allowMainThreadQueries().build();
         ReminderDAO reminderDAO = roomDB.reminderDAO();
         Reminder reminder = reminderDAO.getReminderById(ID);
 

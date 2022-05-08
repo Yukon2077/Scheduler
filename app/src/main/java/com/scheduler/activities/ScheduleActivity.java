@@ -1,36 +1,77 @@
 package com.scheduler.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Room;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.scheduler.R;
+import com.scheduler.broadcast.AlarmReceiver;
+import com.scheduler.database.ReminderDAO;
+import com.scheduler.database.ReminderRoomDB;
+import com.scheduler.models.Reminder;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ScheduleActivity extends AppCompatActivity implements View.OnClickListener {
 
-    Button startDateButton, endDateButton, startTimeButton, endTimeButton ;
+    AlarmManager alarmManager;
+    PendingIntent alarmIntent;
+
+    Button startDateButton, endDateButton, startTimeButton, endTimeButton, saveButton, addPeopleButton;
     MaterialCheckBox isAllDayEvent;
+
+    TextInputLayout titleTextInputLayout, descriptionTextInputLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_schedule);
 
+        titleTextInputLayout = findViewById(R.id.title_textinputlayout);
+        descriptionTextInputLayout = findViewById(R.id.description_textinputlayout);
+
         startDateButton = findViewById(R.id.start_date_button);
         endDateButton = findViewById(R.id.end_date_button);
         startTimeButton = findViewById(R.id.start_time_button);
         endTimeButton = findViewById(R.id.end_time_button);
+        saveButton = findViewById(R.id.save_button);
+        addPeopleButton = findViewById(R.id.people_button);
+
+        saveButton.setOnClickListener(this);
+        addPeopleButton.setOnClickListener(this);
 
         Date date = new Date();
-        startDateButton.setText(date.toString());
+
+        startDateButton.setText(MainActivity.dateFormat.format(date));
         startDateButton.setOnClickListener(this);
+
+        startTimeButton.setText(MainActivity.timeFormat.format(new Date(date.getTime() + 60 * 60 * 1000)));
+        startTimeButton.setOnClickListener(this);
+
+        endDateButton.setText(MainActivity.dateFormat.format(date));
+        endDateButton.setOnClickListener(this);
+
+        endTimeButton.setText(MainActivity.timeFormat.format(new Date(date.getTime() + 2 * 60 * 60 * 1000)));
+        endTimeButton.setOnClickListener(this);
 
         isAllDayEvent = findViewById(R.id.is_all_day_checkbox);
         isAllDayEvent.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -49,12 +90,96 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
 
     @Override
     public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.start_date_button:
+            case R.id.end_date_button:
+                datePicker((Button) view);
+                break;
+            case R.id.start_time_button:
+            case R.id.end_time_button:
+                timePicker((Button) view);
+                break;
+            case R.id.save_button:
+                save();
+                break;
+            case R.id.people_button:
+                addPeople();
+                break;
 
+        }
+    }
+
+    private void save() {
+        ReminderRoomDB roomDB = Room.databaseBuilder(this, ReminderRoomDB.class,"ReminderDB").allowMainThreadQueries().build();
+        ReminderDAO reminderDAO = roomDB.reminderDAO();
+
+        String title, description, startDate, startTime, endDate, endTime, peopleJSON;
+        Boolean isAllDay, isEvent;
+        title = titleTextInputLayout.getEditText().getText().toString();
+        description = descriptionTextInputLayout.getEditText().getText().toString();
+        startDate = startDateButton.getText().toString();
+        startTime = startTimeButton.getText().toString();
+        endDate = endDateButton.getText().toString();
+        endTime = endTimeButton.getText().toString();
+        isAllDay = isAllDayEvent.isChecked();
+        isEvent = true;
+        peopleJSON = "";
+
+        Reminder reminder = new Reminder(title, description, startDate, startTime, endDate, endTime, isAllDay, isEvent, peopleJSON);
+        long id = reminderDAO.addReminder(reminder);
+
+        //need to set alarm here
+        alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        intent.putExtra("ID", id);
+        alarmIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                Date date = MainActivity.dateTimeFormat.parse(startDate + " " + startTime);
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, date.getTime(), alarmIntent);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        finish();
+    }
+
+    private void addPeople() {
+        Intent intent = new Intent(this, SelectPeopleActivity.class);
+        startActivityForResult(intent, 1);
+    }
+
+    private void datePicker(Button button) {
         MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
-                        .setTitleText("Select date")
-                        .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
-                        .build();
+                .setTitleText("Select date")
+                .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                .build();
+        datePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener<Long>() {
+            @Override
+            public void onPositiveButtonClick(Long selection) {
+                button.setText(MainActivity.dateFormat.format(new Date(selection)));
+            }
+        });
+        datePicker.show(getSupportFragmentManager(), "DATE_PICKER");
+    }
 
-        datePicker.show(getSupportFragmentManager(),"DATE_PICKER");
+    private void timePicker(Button button) {
+        MaterialTimePicker timePicker = new MaterialTimePicker.Builder()
+                .setTitleText("Select time")
+                .build();
+        timePicker.addOnPositiveButtonClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    Date date = new SimpleDateFormat("HH:mm").parse(timePicker.getHour() + ":" + timePicker.getMinute());
+                    button.setText(MainActivity.timeFormat.format(date));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                    button.setText("Parse Error");
+                }
+            }
+        });
+        timePicker.show(getSupportFragmentManager(), "TIME_PICKER");
     }
 }

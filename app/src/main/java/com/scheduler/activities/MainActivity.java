@@ -20,6 +20,7 @@ import com.scheduler.models.Reminder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -30,6 +31,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ReminderAdapter reminderAdapter;
     RecyclerView recyclerView;
     List<Reminder> reminderList;
+
+    ReminderRoomDB roomDB;
+    ReminderDAO reminderDAO;
+
+    static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault());
+    static SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+    static SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm a", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,14 +50,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        ReminderRoomDB roomDB = Room.databaseBuilder(this, ReminderRoomDB.class,"ReminderDB").build();
-        ReminderDAO reminderDAO = roomDB.reminderDAO();
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault());
-        SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-
+        roomDB = Room.databaseBuilder(this, ReminderRoomDB.class,"ReminderDB").allowMainThreadQueries().build();
+        reminderDAO = roomDB.reminderDAO();
         reminderList = reminderDAO.getReminderByDate(dateFormat.format(new Date()));
-
         reminderAdapter = new ReminderAdapter(reminderList);
         recyclerView.setAdapter(reminderAdapter);
 
@@ -57,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(@NonNull CalendarView calendarView, int year, int month, int dayOfMonth) {
-                reminderList = reminderDAO.getReminderByDate(year + "/" + month + "/" + dayOfMonth);
+                reminderList = reminderDAO.getReminderByDate(dateFormat.format(new GregorianCalendar(year, month, dayOfMonth).getTime()));
                 reminderAdapter = new ReminderAdapter(reminderList);
                 recyclerView.setAdapter(reminderAdapter);
             }
@@ -72,6 +75,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(new Intent(this, ScheduleActivity.class));
                 break;
         }
+
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        reminderList = reminderDAO.getReminderByDate(dateFormat.format(new Date(calendarView.getDate())));
+        reminderAdapter = new ReminderAdapter(reminderList);
+        recyclerView.setAdapter(reminderAdapter);
 
     }
 }

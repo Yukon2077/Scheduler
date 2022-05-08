@@ -6,7 +6,19 @@ import androidx.room.PrimaryKey;
 
 @Entity
 public class Reminder {
-    
+
+    public Reminder(String title, String description, String startDate, String startTime, String endDate, String endTime, Boolean isAllDay, Boolean isEvent, String peopleJSON) {
+        this.title = title;
+        this.description = description;
+        this.startDate = startDate;
+        this.startTime = startTime;
+        this.endDate = endDate;
+        this.endTime = endTime;
+        this.isAllDay = isAllDay;
+        this.isEvent = isEvent;
+        this.peopleJSON = peopleJSON;
+    }
+
     @PrimaryKey(autoGenerate = true)
     Integer id;
     String title;
@@ -28,7 +40,7 @@ public class Reminder {
     Boolean isAllDay;
 
     @ColumnInfo(name = "is_event")
-    Boolean isEvent;
+    public Boolean isEvent;
 
     @ColumnInfo(name = "people_json")
     String peopleJSON;

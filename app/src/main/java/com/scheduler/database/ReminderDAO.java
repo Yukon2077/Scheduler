@@ -19,10 +19,10 @@ public interface ReminderDAO {
     List<Reminder> getReminderByDate(String startDate);
 
     @Query("SELECT * FROM Reminder WHERE id =:id")
-    Reminder getReminderById(Integer id);
+    Reminder getReminderById(long id);
 
     @Insert
-    void addReminder(Reminder reminder);
+    long addReminder(Reminder reminder);
 
     @Delete
     void deleteReminder(Reminder reminder);
