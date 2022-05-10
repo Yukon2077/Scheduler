@@ -2,7 +2,9 @@ package com.scheduler.activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Build;
@@ -16,6 +18,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.Gson;
 import com.scheduler.R;
 import com.scheduler.adapters.PeopleAdapter;
 import com.scheduler.models.People;
@@ -25,8 +28,9 @@ import java.util.List;
 
 public class SelectPeopleActivity extends AppCompatActivity {
 
-    public Cursor cursor;
-    public List<People> contactsList = new ArrayList<>();
+    Cursor cursor;
+    List<People> contactsList = new ArrayList<>();
+    static List<People> selectedPeopleList;
     RecyclerView recyclerView;
     static TextView selectedPeopleTextView;
     static PeopleAdapter peopleAdapter;
@@ -41,9 +45,10 @@ public class SelectPeopleActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+        if ((ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) &&
+        (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, 1);
+                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.SEND_SMS}, 1);
             }
         } else {
             getContacts();
@@ -78,12 +83,13 @@ public class SelectPeopleActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 1) {// If request is cancelled, the result arrays are empty.
             if (grantResults.length > 0 &&
-                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                    grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 getContacts();
             } else {
                 AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
                 alertBuilder.setCancelable(true);
-                alertBuilder.setMessage("Read contact permission is needed to add contacts. Please go to settings and give permission.");
+                alertBuilder.setMessage("Read contact permission is needed to add contacts. Send SMS permission is required to send SMS. Please go to settings and give permission.");
                 alertBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
                     @Override
                     public void onCancel(DialogInterface dialogInterface) {
@@ -102,15 +108,24 @@ public class SelectPeopleActivity extends AppCompatActivity {
     }
 
     public static void updateSelectedPeople() {
-        List<People> selectedPeopleList = peopleAdapter.getSelectedPeople();
-        String selectedPeopleText = "Selected people: ";
-        for (int i = 0; i < selectedPeopleList.size(); i++) {
-            if (i != 0 || i != selectedPeopleList.size() - 1) { selectedPeopleText += ", ";}
-            selectedPeopleText += selectedPeopleList.get(i).getName();
-        }
-        selectedPeopleTextView.setText(selectedPeopleText);
+        selectedPeopleList = peopleAdapter.getSelectedPeople();
+        selectedPeopleTextView.setText(ScheduleActivity.peopleListToString(selectedPeopleList));
 
     }
 
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent();
+        intent.putExtra("PEOPLE", new Gson().toJson(selectedPeopleList));
+        setResult(Activity.RESULT_OK, intent);
+        super.onBackPressed();
+    }
 
+    @Override
+    protected void onDestroy() {
+        Intent intent = new Intent();
+        intent.putExtra("PEOPLE", new Gson().toJson(selectedPeopleList));
+        setResult(Activity.RESULT_OK, intent);
+        super.onDestroy();
+    }
 }

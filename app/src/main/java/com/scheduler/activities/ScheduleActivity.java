@@ -1,35 +1,40 @@
 package com.scheduler.activities;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.EditText;
+import android.widget.TextView;
 
+
+import com.google.gson.Gson;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.timepicker.MaterialTimePicker;
-import com.google.android.material.timepicker.TimeFormat;
+import com.google.gson.reflect.TypeToken;
 import com.scheduler.R;
 import com.scheduler.broadcast.AlarmReceiver;
 import com.scheduler.database.ReminderDAO;
 import com.scheduler.database.ReminderRoomDB;
+import com.scheduler.models.People;
 import com.scheduler.models.Reminder;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class ScheduleActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -38,8 +43,10 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
 
     Button startDateButton, endDateButton, startTimeButton, endTimeButton, saveButton, addPeopleButton;
     MaterialCheckBox isAllDayEvent;
-
     TextInputLayout titleTextInputLayout, descriptionTextInputLayout;
+    TextView selectedPeopleTextView;
+
+    List<People> selectedPeopleList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +55,7 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
 
         titleTextInputLayout = findViewById(R.id.title_textinputlayout);
         descriptionTextInputLayout = findViewById(R.id.description_textinputlayout);
+        selectedPeopleTextView = findViewById(R.id.selectedPeople_textView);
 
         startDateButton = findViewById(R.id.start_date_button);
         endDateButton = findViewById(R.id.end_date_button);
@@ -115,24 +123,34 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
 
         String title, description, startDate, startTime, endDate, endTime, peopleJSON;
         Boolean isAllDay, isEvent;
-        title = titleTextInputLayout.getEditText().getText().toString();
-        description = descriptionTextInputLayout.getEditText().getText().toString();
+        title = titleTextInputLayout.getEditText().getText().toString().trim();
+        description = descriptionTextInputLayout.getEditText().getText().toString().trim();
         startDate = startDateButton.getText().toString();
         startTime = startTimeButton.getText().toString();
         endDate = endDateButton.getText().toString();
         endTime = endTimeButton.getText().toString();
         isAllDay = isAllDayEvent.isChecked();
         isEvent = true;
-        peopleJSON = "";
+        peopleJSON = new Gson().toJson(selectedPeopleList);
+
+        //Validation
+        if (title.equals("")) {
+            titleTextInputLayout.setError("Title is required");
+        } else {
+            titleTextInputLayout.setError(null);
+        }
+        if (description.equals("")) {
+            description = " ";
+        }
 
         Reminder reminder = new Reminder(title, description, startDate, startTime, endDate, endTime, isAllDay, isEvent, peopleJSON);
         long id = reminderDAO.addReminder(reminder);
 
         //need to set alarm here
         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(this, AlarmReceiver.class);
+        Intent intent = new Intent(getApplicationContext(), AlarmReceiver.class);
         intent.putExtra("ID", id);
-        alarmIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_ONE_SHOT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
                 Date date = MainActivity.dateTimeFormat.parse(startDate + " " + startTime);
@@ -165,8 +183,11 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void timePicker(Button button) {
+        Date date = new Date();
         MaterialTimePicker timePicker = new MaterialTimePicker.Builder()
                 .setTitleText("Select time")
+                .setHour(date.getHours())
+                .setMinute(date.getMinutes())
                 .build();
         timePicker.addOnPositiveButtonClickListener(new View.OnClickListener() {
             @Override
@@ -181,5 +202,27 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
             }
         });
         timePicker.show(getSupportFragmentManager(), "TIME_PICKER");
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
+            String peopleJSON = data.getStringExtra("PEOPLE");
+            selectedPeopleList = new Gson().fromJson(peopleJSON, new TypeToken<List<People>>(){}.getType());
+            selectedPeopleTextView.setText(peopleListToString(selectedPeopleList));
+        }
+    }
+
+    public static String peopleListToString(List<People> peopleList) {
+        String text = "";
+        for (People people : peopleList) {
+            if (!text.equals("")) { text += ", ";}
+            text += people.getName();
+        }
+        if (text.endsWith(", ")) {
+            text.substring(0, text.length() - 2);
+        }
+        return text;
     }
 }
