@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.media.RingtoneManager;
 import android.os.Build;
 import android.telephony.SmsManager;
 import android.widget.Toast;
@@ -42,7 +43,10 @@ public class AlarmReceiver extends BroadcastReceiver {
                 .setContentTitle(reminder.getTitle())
                 .setContentText(reminder.getDescription())
                 .setAutoCancel(true)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .setOngoing(reminder.getAllDay())
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
         notificationManager.notify(reminder.getId(), builder.build());
         String message = (reminder.getTitle() + "\n\n" + reminder.getDescription()).trim();
         List<People> selectedPeopleList = new Gson().fromJson(reminder.getPeopleJSON(), new TypeToken<List<People>>(){}.getType());
@@ -71,8 +75,6 @@ public class AlarmReceiver extends BroadcastReceiver {
         try {
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(phoneNo, null, msg, null, null);
-            Toast.makeText(context, "Message Sent",
-                    Toast.LENGTH_LONG).show();
         } catch (Exception ex) {
             Toast.makeText(context,ex.getMessage(),
                     Toast.LENGTH_LONG).show();

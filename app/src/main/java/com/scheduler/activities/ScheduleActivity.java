@@ -33,6 +33,7 @@ import com.scheduler.models.Reminder;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
     TextInputLayout titleTextInputLayout, descriptionTextInputLayout;
     TextView selectedPeopleTextView;
 
-    List<People> selectedPeopleList;
+    List<People> selectedPeopleList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,7 +123,7 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
         ReminderDAO reminderDAO = roomDB.reminderDAO();
 
         String title, description, startDate, startTime, endDate, endTime, peopleJSON;
-        Boolean isAllDay, isEvent;
+        boolean isAllDay, isEvent;
         title = titleTextInputLayout.getEditText().getText().toString().trim();
         description = descriptionTextInputLayout.getEditText().getText().toString().trim();
         startDate = startDateButton.getText().toString();
@@ -136,11 +137,16 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
         //Validation
         if (title.equals("")) {
             titleTextInputLayout.setError("Title is required");
+            return;
         } else {
             titleTextInputLayout.setError(null);
         }
         if (description.equals("")) {
             description = " ";
+        }
+        if (isAllDay) {
+            startTime = (MainActivity.timeFormat.format("00:00 AM "));
+            endTime = (MainActivity.timeFormat.format("00:00 AM "));
         }
 
         Reminder reminder = new Reminder(title, description, startDate, startTime, endDate, endTime, isAllDay, isEvent, peopleJSON);
@@ -165,6 +171,11 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
 
     private void addPeople() {
         Intent intent = new Intent(this, SelectPeopleActivity.class);
+        if (selectedPeopleList.size() > 0) {
+            intent.putExtra("PEOPLE", new Gson().toJson(selectedPeopleList));
+        } else {
+            intent.putExtra("PEOPLE", " ");
+        }
         startActivityForResult(intent, 1);
     }
 

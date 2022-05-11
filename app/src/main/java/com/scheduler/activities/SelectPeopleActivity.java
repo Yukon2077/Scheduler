@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.util.SparseBooleanArray;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -19,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.scheduler.R;
 import com.scheduler.adapters.PeopleAdapter;
 import com.scheduler.models.People;
@@ -31,7 +33,9 @@ public class SelectPeopleActivity extends AppCompatActivity {
     Cursor cursor;
     List<People> contactsList = new ArrayList<>();
     static List<People> selectedPeopleList;
+    SparseBooleanArray itemStateArray = new SparseBooleanArray();
     RecyclerView recyclerView;
+    String peopleJSON;
     static TextView selectedPeopleTextView;
     static PeopleAdapter peopleAdapter;
 
@@ -44,6 +48,9 @@ public class SelectPeopleActivity extends AppCompatActivity {
         selectedPeopleTextView = findViewById(R.id.textView);
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        peopleJSON = getIntent().getStringExtra("PEOPLE");
+        selectedPeopleList = new Gson().fromJson(peopleJSON, new TypeToken<List<People>>(){}.getType());
 
         if ((ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) &&
         (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED)) {
@@ -73,7 +80,19 @@ public class SelectPeopleActivity extends AppCompatActivity {
         } finally {
             cursor.close();
         }
-        peopleAdapter = new PeopleAdapter(contactsList);
+        if (peopleJSON.equals(" ")) {
+            peopleAdapter = new PeopleAdapter(contactsList);
+        } else {
+            for (int i = 0; i < contactsList.size(); i++) {
+                if(selectedPeopleList.contains(contactsList.get(i))) {
+                    itemStateArray.put(i, true);
+                } else {
+                    itemStateArray.put(i, false);
+                }
+            }
+            peopleAdapter = new PeopleAdapter(contactsList, itemStateArray);
+            selectedPeopleTextView.setText(ScheduleActivity.peopleListToString(selectedPeopleList));
+        }
         recyclerView.setAdapter(peopleAdapter);
 
     }

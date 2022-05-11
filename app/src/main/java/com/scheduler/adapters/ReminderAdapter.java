@@ -31,6 +31,12 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.Remind
     public void onBindViewHolder(@NonNull ReminderAdapter.ReminderViewHolder holder, int position) {
         holder.titleTextView.setText(reminderList.get(position).getTitle());
         holder.timeTextView.setText(reminderList.get(position).getStartTime());
+        String description = reminderList.get(position).getDescription();
+        if (!description.equals(" ")) {
+            holder.descriptionTextView.setText(description);
+        } else {
+            holder.descriptionTextView.setVisibility(View.GONE);
+        }
 
     }
 
@@ -41,12 +47,13 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.Remind
 
     public static class ReminderViewHolder extends RecyclerView.ViewHolder{
 
-        TextView titleTextView, timeTextView;
+        TextView titleTextView, timeTextView, descriptionTextView;
 
         public ReminderViewHolder(@NonNull View itemView) {
             super(itemView);
             titleTextView = itemView.findViewById(R.id.title_textview);
             timeTextView = itemView.findViewById(R.id.time_textview);
+            descriptionTextView = itemView.findViewById(R.id.description_textView);
         }
     }
 }

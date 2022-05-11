@@ -28,6 +28,11 @@ public class PeopleAdapter extends RecyclerView.Adapter<PeopleAdapter.PeopleView
         this.peopleList = peopleList;
     }
 
+    public PeopleAdapter(List<People> peopleList, SparseBooleanArray itemStateArray) {
+        this.peopleList = peopleList;
+        this.itemStateArray = itemStateArray;
+    }
+
     @NonNull
     @Override
     public PeopleAdapter.PeopleViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
