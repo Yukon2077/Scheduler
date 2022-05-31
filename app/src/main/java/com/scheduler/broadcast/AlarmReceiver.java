@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.os.Build;
 import android.telephony.SmsManager;
@@ -49,6 +50,9 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         notificationManager.notify(reminder.getId(), builder.build());
         String message = (reminder.getTitle() + "\n\n" + reminder.getDescription()).trim();
+        if (message.length() >= 160) {
+            message = message.substring(0, 159);
+        }
         List<People> selectedPeopleList = new Gson().fromJson(reminder.getPeopleJSON(), new TypeToken<List<People>>(){}.getType());
         for (int i = 0; i < selectedPeopleList.size(); i++) {
             sendSMS(context, selectedPeopleList.get(i).getNumber(), message);

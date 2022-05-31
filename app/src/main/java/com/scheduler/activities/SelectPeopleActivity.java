@@ -51,6 +51,9 @@ public class SelectPeopleActivity extends AppCompatActivity {
 
         peopleJSON = getIntent().getStringExtra("PEOPLE");
         selectedPeopleList = new Gson().fromJson(peopleJSON, new TypeToken<List<People>>(){}.getType());
+        if (selectedPeopleList.size() == 0) {
+            selectedPeopleTextView.setText("Select people to remind");
+        }
 
         if ((ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) &&
         (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED)) {
@@ -128,6 +131,10 @@ public class SelectPeopleActivity extends AppCompatActivity {
 
     public static void updateSelectedPeople() {
         selectedPeopleList = peopleAdapter.getSelectedPeople();
+        if (selectedPeopleList == null || selectedPeopleList.isEmpty()) {
+            selectedPeopleTextView.setText("Select people to remind");
+            return;
+        }
         selectedPeopleTextView.setText(ScheduleActivity.peopleListToString(selectedPeopleList));
 
     }

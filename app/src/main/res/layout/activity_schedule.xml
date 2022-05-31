@@ -51,6 +51,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
+                android:visibility="gone"
                 android:text="All-Day Event?"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -87,6 +88,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:text="end date"
+                android:visibility="gone"
                 app:cornerRadius="4dp"
                 app:layout_constraintEnd_toStartOf="@id/end_time_button"
                 app:layout_constraintStart_toStartOf="parent"
@@ -99,6 +101,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:text="end time"
+                android:visibility="gone"
                 app:cornerRadius="4dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/end_date_button"
@@ -136,14 +139,14 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:drawableLeft="@drawable/ic_add"
-                android:text="People"
+                android:text="Select people to remind"
                 android:textAlignment="viewStart"
                 app:cornerRadius="4dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/description_textinputlayout" />
 
-            <TextView
+            <!--<TextView
                 android:id="@+id/selectedPeople_textView"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -151,7 +154,7 @@
                 android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/people_button" />
+                app:layout_constraintTop_toBottomOf="@+id/people_button" />-->
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

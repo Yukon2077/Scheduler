@@ -1,5 +1,6 @@
 package com.scheduler.adapters;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.scheduler.R;
+import com.scheduler.activities.ScheduleActivity;
 import com.scheduler.models.Reminder;
 
 import java.util.List;
@@ -37,6 +39,15 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.Remind
         } else {
             holder.descriptionTextView.setVisibility(View.GONE);
         }
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(holder.itemView.getContext(), ScheduleActivity.class);
+                intent.putExtra("ID", reminderList.get(position).getId());
+                holder.itemView.getContext().startActivity(intent);
+            }
+        });
 
     }
 

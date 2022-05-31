@@ -2,6 +2,7 @@ package com.scheduler.activities;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.room.Room;
 
 import android.app.Activity;
@@ -11,12 +12,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.gson.Gson;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -39,13 +42,17 @@ import java.util.List;
 
 public class ScheduleActivity extends AppCompatActivity implements View.OnClickListener {
 
+    long id = -1;
     AlarmManager alarmManager;
     PendingIntent alarmIntent;
 
+    ReminderRoomDB roomDB;
+    ReminderDAO reminderDAO;
+
+    MaterialToolbar materialToolbar;
     Button startDateButton, endDateButton, startTimeButton, endTimeButton, saveButton, addPeopleButton;
     MaterialCheckBox isAllDayEvent;
     TextInputLayout titleTextInputLayout, descriptionTextInputLayout;
-    TextView selectedPeopleTextView;
 
     List<People> selectedPeopleList = new ArrayList<>();
 
@@ -54,9 +61,12 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_schedule);
 
+        roomDB = Room.databaseBuilder(getApplicationContext(), ReminderRoomDB.class,"ReminderDB").allowMainThreadQueries().build();
+        reminderDAO = roomDB.reminderDAO();
+
         titleTextInputLayout = findViewById(R.id.title_textinputlayout);
         descriptionTextInputLayout = findViewById(R.id.description_textinputlayout);
-        selectedPeopleTextView = findViewById(R.id.selectedPeople_textView);
+        materialToolbar = findViewById(R.id.toolbar);
 
         startDateButton = findViewById(R.id.start_date_button);
         endDateButton = findViewById(R.id.end_date_button);
@@ -95,6 +105,42 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
                 }
             }
         });
+
+        materialToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        id = getIntent().getIntExtra("ID", -1);
+        if (id != -1) {
+            Reminder reminder = reminderDAO.getReminderById(id);
+
+            startDateButton.setText(reminder.getStartDate());
+            endDateButton.setText(reminder.getEndDate());
+            startTimeButton.setText(reminder.getStartTime());
+            endTimeButton.setText(reminder.getEndTime());
+            selectedPeopleList = new Gson().fromJson(reminder.getPeopleJSON(), new TypeToken<List<People>>(){}.getType());
+            addPeopleButton.setText(peopleListToString(selectedPeopleList));
+            isAllDayEvent.setChecked(reminder.getAllDay());
+            titleTextInputLayout.getEditText().setText(reminder.getTitle());
+            descriptionTextInputLayout.getEditText().setText(reminder.getDescription());
+
+            materialToolbar.inflateMenu(R.menu.schedule_menu);
+            materialToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    switch(item.getItemId()){
+                        case R.id.delete:
+                            reminderDAO.deleteReminder(reminder);
+                            finish();
+                            return true;
+                    }
+                    return false;
+                }
+            });
+        }
     }
 
     @Override
@@ -119,8 +165,7 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void save() {
-        ReminderRoomDB roomDB = Room.databaseBuilder(this, ReminderRoomDB.class,"ReminderDB").allowMainThreadQueries().build();
-        ReminderDAO reminderDAO = roomDB.reminderDAO();
+
 
         String title, description, startDate, startTime, endDate, endTime, peopleJSON;
         boolean isAllDay, isEvent;
@@ -150,13 +195,21 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
         }
 
         Reminder reminder = new Reminder(title, description, startDate, startTime, endDate, endTime, isAllDay, isEvent, peopleJSON);
-        long id = reminderDAO.addReminder(reminder);
 
-        //need to set alarm here
         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(getApplicationContext(), AlarmReceiver.class);
-        intent.putExtra("ID", id);
-        alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_ONE_SHOT);
+
+        if (id == -1) {
+            id = reminderDAO.addReminder(reminder);
+            intent.putExtra("ID", id);
+            alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), (int) id, intent, PendingIntent.FLAG_ONE_SHOT);
+        } else {
+            reminder.setId((int) id);
+            reminderDAO.updateReminder(reminder);
+            intent.putExtra("ID", id);
+            alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), (int) id, intent, PendingIntent.FLAG_ONE_SHOT);
+            alarmManager.cancel(alarmIntent);
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
                 Date date = MainActivity.dateTimeFormat.parse(startDate + " " + startTime);
@@ -165,16 +218,13 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
                 e.printStackTrace();
             }
         }
-
         finish();
     }
 
     private void addPeople() {
         Intent intent = new Intent(this, SelectPeopleActivity.class);
-        if (selectedPeopleList.size() > 0) {
+        if (selectedPeopleList != null) {
             intent.putExtra("PEOPLE", new Gson().toJson(selectedPeopleList));
-        } else {
-            intent.putExtra("PEOPLE", " ");
         }
         startActivityForResult(intent, 1);
     }
@@ -221,12 +271,14 @@ public class ScheduleActivity extends AppCompatActivity implements View.OnClickL
         if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
             String peopleJSON = data.getStringExtra("PEOPLE");
             selectedPeopleList = new Gson().fromJson(peopleJSON, new TypeToken<List<People>>(){}.getType());
-            selectedPeopleTextView.setText(peopleListToString(selectedPeopleList));
+            if (selectedPeopleList == null) { return; }
+            addPeopleButton.setText(peopleListToString(selectedPeopleList));
         }
     }
 
     public static String peopleListToString(List<People> peopleList) {
         String text = "";
+        if (peopleList.size() == 0) { return "Select people to remind"; }
         for (People people : peopleList) {
             if (!text.equals("")) { text += ", ";}
             text += people.getName();

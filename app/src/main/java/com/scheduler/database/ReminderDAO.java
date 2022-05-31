@@ -3,7 +3,9 @@ package com.scheduler.database;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.scheduler.models.Reminder;
 
@@ -26,5 +28,8 @@ public interface ReminderDAO {
 
     @Delete
     void deleteReminder(Reminder reminder);
+
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    int updateReminder(Reminder reminder);
 
 }
